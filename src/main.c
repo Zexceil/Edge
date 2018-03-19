@@ -196,7 +196,7 @@ void Render(SDL_Renderer *renderer, Block *block)
 	SDL_RenderFillRect(renderer, &health);
   //Draw Power
 	SDL_SetRenderDrawColor(renderer, (250 - block->Power), (block->Power), 0, 200);
-	SDL_Rect power = {10, 20, (block->Power), 10};
+	SDL_Rect power = {10, 30, (block->Power), 10};
 	SDL_RenderFillRect(renderer, &power);
 
   //Room bounding box
@@ -211,26 +211,51 @@ void Render(SDL_Renderer *renderer, Block *block)
 	SDL_RenderFillRect(renderer, &PBBL);
 	SDL_RenderFillRect(renderer, &PBBR);
 
+	//Collision stuff
+
+	//Check for collision with SDL bools
 	SDL_bool TopCol = SDL_HasIntersection(&Player, &PBBT);
 	SDL_bool LeftCol = SDL_HasIntersection(&Player, &PBBL);
 	SDL_bool RightCol = SDL_HasIntersection(&Player, &PBBR);
 	SDL_bool BottomCol = SDL_HasIntersection(&Player, &PBBB);
 
-	if(TopCol){
-		block->y += 5;
+
+	//Collision events
+	if(ctrl.buttons & (SCE_CTRL_CROSS)){
+		if(TopCol){
+			block->y += 8.5;
+		}
+
+		if(LeftCol){
+			block->x += 8.5;
+
+		}
+
+		if(RightCol){
+			block->x -= 8.5;
+		}
+
+		if(BottomCol){
+			block->y -= 8.5;
+		}
 	}
+	else{
+		if(TopCol){
+			block->y += 6.5;
+		}
 
-	if(LeftCol){
-		block->x += 5;
+		if(LeftCol){
+			block->x += 6.5;
 
-	}
+		}
 
-	if(RightCol){
-		block->x -= 5;
-	}
+		if(RightCol){
+			block->x -= 6.5;
+		}
 
-	if(BottomCol){
-		block->y -= 5;
+		if(BottomCol){
+			block->y -= 6.5;
+		}
 	}
 
 	SDL_RenderPresent(renderer);
