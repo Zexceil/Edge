@@ -25,7 +25,7 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(VITA_APP_NAME "Edge")
 set(VITA_TITLEID  "VEDG00223")
-set(VITA_VERSION  "01.92")
+set(VITA_VERSION  "02.50")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu11 -Wall ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall ")
