@@ -21,6 +21,7 @@ typedef struct{
 	int CTRLVAR;
 	int Health;
 	int Power;
+	int Spd;
 } Block;
 
 
@@ -29,19 +30,6 @@ int processEvents(SDL_Window *window, Block *block){
 	
 	SDL_Event event;
 	int done = 0;
-
-	int XP;
-	int XN;
-	int YP;
-	int YN;
-	int Spd;
-
-	Spd = 4;
-	XN = 0;
-	XP = 0;
-	YN = 0;
-	YP = 0;
-
 
 	while(SDL_PollEvent(&event)){
 		switch(event.type){
@@ -60,91 +48,8 @@ int processEvents(SDL_Window *window, Block *block){
 		}
 	}
 
-
-    //PS Vita controller stuff
-
-    //Vars
-
-    //Setup
-	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
-	SceCtrlData ctrl;
-	sceCtrlPeekBufferPositive(0, &ctrl, 1);
-
-	//Specialu powarr!
-	if(ctrl.buttons & (SCE_CTRL_CROSS)){
-		Spd += 2.5;
-	}
-
-	//Control switcher
-	if(ctrl.buttons & (SCE_CTRL_TRIANGLE)){
-		SDL_Delay(300);
-		if(block->CTRLVAR == 1){
-			block->CTRLVAR = 0;
-		}
-		else{
-			block->CTRLVAR = 1;
-		}
-	}
-	
-    //Analogue controls
-	if(block->CTRLVAR == 1){
-		if(ctrl.lx > 177.5){
-			XP += 1;
-		}
-
-		if(ctrl.lx < 77.5){
-			XN += 1;
-		}
-
-		if(ctrl.ly > 177.5){
-			YP += 1;
-		}
-
-		if(ctrl.ly < 77.5){
-			YN += 1;
-		}
-	}
-
-
-    //D-PAD controls
-	if(block->CTRLVAR == 0){
-		if(ctrl.buttons & (SCE_CTRL_UP)){
-			YN += 1;
-		}
-
-		if(ctrl.buttons & (SCE_CTRL_DOWN)){
-			YP += 1;
-		}
-
-		if(ctrl.buttons & (SCE_CTRL_LEFT)){
-			XN += 1;
-		}
-
-		if(ctrl.buttons & (SCE_CTRL_RIGHT)){
-			XP += 1;
-		}
-	}
-
-
-	if(XP >= 1){
-		block->x += Spd;
-	}
-
-	if(XN >= 1){
-		block->x -= Spd;
-	}
-
-	if(YP >= 1){
-		block->y += Spd;
-	}
-
-	if(YN >= 1){
-		block->y -= Spd;
-	}
-
 	return done;
 }
-
 
 
 void Render(SDL_Renderer *renderer, Block *block)
@@ -158,12 +63,17 @@ void Render(SDL_Renderer *renderer, Block *block)
 
 	SDL_RenderClear(renderer);
 
-
 	
 	SDL_Rect Player = {block->x, block->y, 25, 25};
 	SDL_RenderClear(renderer);
 	if(ctrl.buttons & (SCE_CTRL_CROSS)){
-		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+		if(block->Power > 1){
+			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+		}
+		else{
+			SDL_SetRenderDrawColor(renderer, 255, 100, 100, 180);
+			block->Power += 1.5;
+		}
 	}
 	else{
 		SDL_SetRenderDrawColor(renderer, 255, 100, 100, 180);
@@ -223,43 +133,162 @@ void Render(SDL_Renderer *renderer, Block *block)
 	//Collision events
 	if(ctrl.buttons & (SCE_CTRL_CROSS)){
 		if(TopCol){
-			block->y += 8.5;
+			block->y += 5.7;
 		}
 
 		if(LeftCol){
-			block->x += 8.5;
+			block->x += 5.7;
 
 		}
 
 		if(RightCol){
-			block->x -= 8.5;
+			block->x -= 5.7;
 		}
 
 		if(BottomCol){
-			block->y -= 8.5;
+			block->y -= 5.7;
 		}
 	}
 	else{
 		if(TopCol){
-			block->y += 6.5;
+			block->Spd = 0;
+			block->y += 5.5;
 		}
 
 		if(LeftCol){
-			block->x += 6.5;
+			block->Spd = 0;
+			block->x += 5.3;
 
 		}
 
 		if(RightCol){
-			block->x -= 6.5;
+			block->Spd = 0;
+			block->x -= 3.9;
 		}
 
 		if(BottomCol){
-			block->y -= 6.5;
+			block->Spd = 0;
+			block->y -= 4.1;
+		}
+		else{
+			block->Spd = 4;
 		}
 	}
 
+
 	SDL_RenderPresent(renderer);
 }
+
+void Controls(Block *block){
+
+	int XP;
+	int XN;
+	int YP;
+	int YN;
+	int Spd;
+
+	Spd = block->Spd;
+	XN = 0;
+	XP = 0;
+	YN = 0;
+	YP = 0;
+	
+    //Setup
+	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
+	SceCtrlData ctrl;
+	sceCtrlPeekBufferPositive(0, &ctrl, 1);
+
+	//Specialu powarr!
+	if(ctrl.buttons & (SCE_CTRL_CROSS)){
+		if (block->Power > 5){
+			Spd += 2.5;
+			block->Power -= 1.5;
+		}
+	}
+	else{
+		if(block->Power < 248.5){ 
+			if(ctrl.buttons & (SCE_CTRL_CROSS)){
+			}
+			else{
+				block->Power += 1.5;
+			}
+		}
+	}
+
+	//Control switcher
+	if(ctrl.buttons & (SCE_CTRL_TRIANGLE)){
+		SDL_Delay(300);
+		if(block->CTRLVAR == 1){
+			block->CTRLVAR = 0;
+		}
+		else{
+			block->CTRLVAR = 1;
+		}
+	}
+	
+    //Analogue controls
+	if(block->CTRLVAR == 1){
+		if(ctrl.lx > 177.5){
+			XP += 1;
+		}
+
+		if(ctrl.lx < 77.5){
+			XN += 1;
+		}
+
+		if(ctrl.ly > 177.5){
+			YP += 1;
+		}
+
+		if(ctrl.ly < 77.5){
+			YN += 1;
+		}
+	}
+	
+
+	//TO DO TOMORROW ~ MOVE CONTROL STUFF AFTER BOOL CHECKS FOR BETTER COLLISION DETECTION!
+
+	
+    //D-PAD controls
+
+	if(block->CTRLVAR == 0){
+		if(ctrl.buttons & (SCE_CTRL_UP)){
+			YN += 1;
+		}
+
+		if(ctrl.buttons & (SCE_CTRL_DOWN)){
+			YP += 1;
+		}
+
+		if(ctrl.buttons & (SCE_CTRL_LEFT)){
+			XN += 1;
+		}
+
+		if(ctrl.buttons & (SCE_CTRL_RIGHT)){
+			XP += 1;
+		}
+	}
+	
+
+
+	if(XP >= 1){
+		block->x += Spd;
+	}
+
+	if(XN >= 1){
+		block->x -= Spd;
+	}
+
+	if(YP >= 1){
+		block->y += Spd;
+	}
+
+	if(YN >= 1){
+		block->y -= Spd;
+	}
+}
+
+
 
 int main(int argc, char *argv[]) {
 
@@ -283,6 +312,7 @@ int main(int argc, char *argv[]) {
     block.CTRLVAR = 0;
     block.Health = 200;
     block.Power = 250;
+    block.Spd = 4;
     
 
 
@@ -292,6 +322,7 @@ int main(int argc, char *argv[]) {
     while(!done){
     	done = processEvents(window, &block);
     	Render(renderer, &block);
+    	Controls(&block);
     	SDL_Delay(10);
     }
   
