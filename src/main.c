@@ -15,6 +15,8 @@
 
 //Input stuff
 
+int FPS = 0;
+
 //Stuff stuff
 typedef struct{
 	int x, y;
@@ -23,6 +25,12 @@ typedef struct{
 	int Power;
 	int Spd;
 } Block;
+
+typedef struct{
+	int x, y;
+	int Health;
+	int Spd;
+} Enemy;
 
 
 //SDL Stuff
@@ -52,7 +60,7 @@ int processEvents(SDL_Window *window, Block *block){
 }
 
 
-void Render(SDL_Renderer *renderer, Block *block)
+void Render(SDL_Renderer *renderer, Block *block, Enemy *enemy)
 {
 
 	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
@@ -60,12 +68,10 @@ void Render(SDL_Renderer *renderer, Block *block)
 	sceCtrlPeekBufferPositive(0, &ctrl, 1);
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-
 	SDL_RenderClear(renderer);
 
 	
 	SDL_Rect Player = {block->x, block->y, 25, 25};
-	SDL_RenderClear(renderer);
 	if(ctrl.buttons & (SCE_CTRL_CROSS)){
 		if(block->Power > 1){
 			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
@@ -80,6 +86,11 @@ void Render(SDL_Renderer *renderer, Block *block)
 		
 	}
 	SDL_RenderFillRect(renderer, &Player);
+	
+	SDL_SetRenderDrawColor(renderer, 100, 100, 250, 190);
+	
+	SDL_Rect EnemyR = {enemy->x, enemy->y, 25, 25};
+	SDL_RenderFillRect(renderer, &EnemyR);
 
   //Game room GUI 
 
@@ -129,6 +140,26 @@ void Render(SDL_Renderer *renderer, Block *block)
 	SDL_bool RightCol = SDL_HasIntersection(&Player, &PBBR);
 	SDL_bool BottomCol = SDL_HasIntersection(&Player, &PBBB);
 
+	SDL_bool EnemyCol = SDL_HasIntersection(&Player, &EnemyR);
+
+	if(EnemyCol){
+		if(enemy->x > block->x){
+			enemy->x += 30;
+		}
+
+		if(enemy->x < block->x){
+			enemy->x -= 30;
+		}
+
+		if(enemy->y > block->y){
+			enemy->y += 30;
+		}
+
+		if(enemy->y < block->y){
+			enemy->y -= 30;
+		}
+	}
+
 
 	//Collision events
 	if(ctrl.buttons & (SCE_CTRL_CROSS)){
@@ -171,7 +202,7 @@ void Render(SDL_Renderer *renderer, Block *block)
 			block->y -= 4.1;
 		}
 		else{
-			block->Spd = 4;
+			block->Spd = 6.5;
 		}
 	}
 
@@ -288,7 +319,25 @@ void Controls(Block *block){
 	}
 }
 
+void EnemyFollow(Block *block, Enemy *enemy){
+	int ESpd;
+	ESpd = enemy->Spd;
+	if(enemy->x > block->x){
+		enemy->x -= ESpd;
+	}
 
+	if(enemy->x < block->x){
+		enemy->x += ESpd;
+	}
+
+	if(enemy->y > block->y){
+		enemy->y -= ESpd;
+	}
+
+	if(enemy->y < block->y){
+		enemy->y += ESpd;
+	}
+}
 
 int main(int argc, char *argv[]) {
 
@@ -302,9 +351,9 @@ int main(int argc, char *argv[]) {
                               SDL_WINDOW_FULLSCREEN,      
                               960,                            
                               544,                       
-                              0                                
+                              0                              
                               );
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_WINDOW_OPENGL);
 
     Block block;
     block.x = 480;
@@ -312,18 +361,25 @@ int main(int argc, char *argv[]) {
     block.CTRLVAR = 0;
     block.Health = 200;
     block.Power = 250;
-    block.Spd = 4;
+    block.Spd = 6.5;
     
+    Enemy enemy;
+    enemy.x = 400;
+    enemy.y = 200;
+    enemy.Health =300;
+    enemy.Spd = 4; 
 
 
     int done = 0;
   
 
     while(!done){
+
     	done = processEvents(window, &block);
-    	Render(renderer, &block);
+    	EnemyFollow(&block, &enemy);
+    	Render(renderer, &block, &enemy);
     	Controls(&block);
-    	SDL_Delay(10);
+    	SDL_Delay(1000/45);
     }
   
   
