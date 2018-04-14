@@ -1,5 +1,6 @@
 //PS Vita imports
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <vita2d.h>
 #include <psp2/ctrl.h>
 
@@ -17,6 +18,7 @@
 
 int FPS = 0;
 
+
 //Stuff stuff
 typedef struct{
 	int x, y;
@@ -24,6 +26,7 @@ typedef struct{
 	int Health;
 	int Power;
 	int Spd;
+	SDL_Texture* PlayerTex;
 } Block;
 
 typedef struct{
@@ -31,6 +34,9 @@ typedef struct{
 	int Health;
 	int Spd;
 } Enemy;
+
+SDL_Texture* PlayerTex = NULL;
+SDL_Surface* PlayerImg = NULL;
 
 
 //SDL Stuff
@@ -62,6 +68,7 @@ int processEvents(SDL_Window *window, Block *block){
 
 void Render(SDL_Renderer *renderer, Block *block, Enemy *enemy)
 {
+	
 
 	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
 	SceCtrlData ctrl;
@@ -69,9 +76,10 @@ void Render(SDL_Renderer *renderer, Block *block, Enemy *enemy)
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
+    
+    
 
-	
-	SDL_Rect Player = {block->x, block->y, 25, 25};
+    SDL_Rect Player = {block->x, block->y, 25, 25};
 	if(ctrl.buttons & (SCE_CTRL_CROSS)){
 		if(block->Power > 1){
 			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
@@ -85,8 +93,15 @@ void Render(SDL_Renderer *renderer, Block *block, Enemy *enemy)
 		SDL_SetRenderDrawColor(renderer, 255, 100, 100, 180);
 		
 	}
-	SDL_RenderFillRect(renderer, &Player);
+
+
+	SDL_RenderCopy(renderer, block->PlayerTex, NULL, &Player);
+
 	
+	
+
+	
+
 	SDL_SetRenderDrawColor(renderer, 100, 100, 250, 190);
 	
 	SDL_Rect EnemyR = {enemy->x, enemy->y, 25, 25};
@@ -131,6 +146,8 @@ void Render(SDL_Renderer *renderer, Block *block, Enemy *enemy)
 	SDL_RenderFillRect(renderer, &PBBT);
 	SDL_RenderFillRect(renderer, &PBBL);
 	SDL_RenderFillRect(renderer, &PBBR);
+
+
 
 	//Collision stuff
 
@@ -344,7 +361,8 @@ int main(int argc, char *argv[]) {
     SDL_Window *window;                
     SDL_Renderer *renderer;                
   
-    SDL_Init(SDL_INIT_VIDEO);             
+    SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
   
     window = SDL_CreateWindow("Window1",                
                               SDL_WINDOW_FULLSCREEN,
@@ -354,6 +372,10 @@ int main(int argc, char *argv[]) {
                               0                              
                               );
     renderer = SDL_CreateRenderer(window, -1, SDL_WINDOW_OPENGL);
+
+    
+    
+    
 
     Block block;
     block.x = 480;
@@ -370,8 +392,13 @@ int main(int argc, char *argv[]) {
     enemy.Spd = 4; 
 
 
+    SDL_Surface* PlayerImg = IMG_Load("app0:/assets/Player.png");
+    block.PlayerTex = SDL_CreateTextureFromSurface(renderer, PlayerImg);
+    SDL_FreeSurface(PlayerImg);
+    
+    
+
     int done = 0;
-  
 
     while(!done){
 
@@ -381,9 +408,10 @@ int main(int argc, char *argv[]) {
     	Controls(&block);
     	SDL_Delay(1000/45);
     }
-  
-  
 
+
+    IMG_Quit();
+    SDL_DestroyTexture(block.PlayerTex);
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
